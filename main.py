@@ -16,12 +16,16 @@ Ship = namedtuple("Ship", ["row", "col", "orientation"])
 # Arrangements
 horizontal_arrangements = [Ship(r, c, "h") for r in range(n) for c in range(n - k + 1)]
 vertical_arrangements = [Ship(r, c, "v") for r in range(n - k + 1) for c in range(n)]
+total_arangements = horizontal_arrangements + vertical_arrangements
 
 # Map how many times a ship intersects an occupied square
+from weight_methods import hard_uniform
+
+weighting = hard_uniform  # Specify the weighting mechanism for sampling.
+
 ship_intersection_counter = {
-    s: 0 for s in horizontal_arrangements + vertical_arrangements
+    s: [0, weighting(0)] for s in horizontal_arrangements + vertical_arrangements
 }
-valid_placements = list(ship_intersection_counter.keys())
 
 # Map which arrangements intersect which squares
 grid_ship_map = np.empty((n, n), dtype=object)
@@ -52,8 +56,8 @@ for r in range(n):
         # Increment counter of all ships that intersect this region
         update_valid_placements_and_ship_dictionary(
             grid_ship_map,
-            valid_placements,
             ship_intersection_counter,
+            weighting,
             k,
             Ship(r, c, "h"),
             insert=True,
@@ -67,10 +71,10 @@ for r in range(n):
 # Run Gibbs sampler
 from helper_methods import update_grid
 
-import time
+import time, random
 
 samples = []
-iterations = 1000
+iterations = 3000
 
 begin_sampling = time.time()
 
@@ -84,20 +88,22 @@ for i in range(iterations):
         update_grid(grid, k, ship, 0)
         update_valid_placements_and_ship_dictionary(
             grid_ship_map,
-            valid_placements,
             ship_intersection_counter,
+            weighting,
             k,
             ship,
             insert=False,
         )
 
         # Sample a new ship
-        m = np.random.randint(0, len(valid_placements))
-        new_ship = valid_placements[m]
+        weights = [v[1] for v in ship_intersection_counter.values()]
+        ships = list(ship_intersection_counter.keys())
+        new_ship = random.choices(ships, weights=weights)[0]
+
         update_valid_placements_and_ship_dictionary(
             grid_ship_map,
-            valid_placements,
             ship_intersection_counter,
+            weighting,
             k,
             new_ship,
             insert=True,
