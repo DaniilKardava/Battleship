@@ -1,0 +1,8 @@
+The transition rule is to pick up a ship and place it down randomly anywhere that is available. This rule satisfies detailed balance since the distribution pi is uniform and the transition kernel is symmetric. 
+
+To do:
+clean up the code and sync with github
+Approximate Z
+Implement in C for speed
+Minimize shots to hit everything. 
+Maximizing information
