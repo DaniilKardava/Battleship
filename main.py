@@ -4,6 +4,7 @@ import numpy as np
 n = 20
 k = 5
 q = 50
+beta = 1e10
 
 # Grid
 grid = np.zeros((n, n))
@@ -17,27 +18,31 @@ Ship = namedtuple("Ship", ["row", "col", "orientation"])
 horizontal_arrangements = [Ship(r, c, "h") for r in range(n) for c in range(n - k + 1)]
 vertical_arrangements = [Ship(r, c, "v") for r in range(n - k + 1) for c in range(n)]
 total_arangements = horizontal_arrangements + vertical_arrangements
+ship_id = {s: i for i, s in enumerate(total_arangements)}
 
 # Map how many times a ship intersects an occupied square
-from weight_methods import hard_uniform
+from weight_methods import hard_uniform, boltzman
+from functools import partial
 
-weighting = hard_uniform  # Specify the weighting mechanism for sampling.
+weight_args = []
+weighting = partial(
+    hard_uniform, *weight_args
+)  # Specify the weighting mechanism for sampling.
 
-ship_intersection_counter = {
-    s: [0, weighting(0)] for s in horizontal_arrangements + vertical_arrangements
-}
+intersections = [0] * len(total_arangements)
+weights = [weighting(0)] * len(total_arangements)
 
 # Map which arrangements intersect which squares
 grid_ship_map = np.empty((n, n), dtype=object)
 grid_ship_map[:] = [[[] for _ in range(n)] for _ in range(n)]
 
-for ship, _ in ship_intersection_counter.items():
+for ship in total_arangements:
     if ship.orientation == "h":
         for i in range(k):
-            grid_ship_map[ship.row, ship.col + i].append(ship)
+            grid_ship_map[ship.row, ship.col + i].append(ship_id[ship])
     else:
         for i in range(k):
-            grid_ship_map[ship.row + i, ship.col].append(ship)
+            grid_ship_map[ship.row + i, ship.col].append(ship_id[ship])
 
 
 # Active Ships
@@ -51,15 +56,17 @@ for r in range(n):
     if count >= q:
         break
     for c in range(0, n - k + 1, k):
-        active_ships.append(Ship(r, c, "h"))
+        ship = Ship(r, c, "h")
+        active_ships.append(ship)
 
         # Increment counter of all ships that intersect this region
         update_valid_placements_and_ship_dictionary(
             grid_ship_map,
-            ship_intersection_counter,
+            intersections,
+            weights,
             weighting,
             k,
-            Ship(r, c, "h"),
+            ship,
             insert=True,
         )
 
@@ -88,7 +95,8 @@ for i in range(iterations):
         update_grid(grid, k, ship, 0)
         update_valid_placements_and_ship_dictionary(
             grid_ship_map,
-            ship_intersection_counter,
+            intersections,
+            weights,
             weighting,
             k,
             ship,
@@ -96,13 +104,12 @@ for i in range(iterations):
         )
 
         # Sample a new ship
-        weights = [v[1] for v in ship_intersection_counter.values()]
-        ships = list(ship_intersection_counter.keys())
-        new_ship = random.choices(ships, weights=weights)[0]
+        new_ship = random.choices(total_arangements, weights=weights)[0]
 
         update_valid_placements_and_ship_dictionary(
             grid_ship_map,
-            ship_intersection_counter,
+            intersections,
+            weights,
             weighting,
             k,
             new_ship,

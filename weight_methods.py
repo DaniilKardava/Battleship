@@ -1,5 +1,7 @@
 """
-This file contains weighting methods for sampling battleships in the Gibbs sampler.
+This file contains weighting methods for sampling battleships in the Gibbs
+sampler. Design choice is to pass collisions last to allow for binding earlier
+positional arguments using partial functools method in main.
 """
 import math
 
@@ -13,7 +15,7 @@ def hard_uniform(collisions):
     return collisions == 0
 
 
-def boltzman(collisions, beta):
+def boltzman(beta, collisions):
     """
     Args: Number of collisions, inverse temperature
     """
