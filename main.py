@@ -23,7 +23,6 @@ ship_intersection_counter = {
 }
 valid_placements = list(ship_intersection_counter.keys())
 
-
 # Map which arrangements intersect which squares
 grid_ship_map = np.empty((n, n), dtype=object)
 grid_ship_map[:] = [[[] for _ in range(n)] for _ in range(n)]
@@ -36,34 +35,13 @@ for ship, _ in ship_intersection_counter.items():
         for i in range(k):
             grid_ship_map[ship.row + i, ship.col].append(ship)
 
-# Update the ship dictionary and the valid placements list
-def update_valid_placements_and_ship_dictionary(ship, insert):
-    """
-    Call this function after inserting or removing a ship.
-    """
-    increment = 1 * insert + -1 * (not insert)
-    if ship.orientation == "h":
-        for i in range(k):
-            for s in grid_ship_map[ship.row, ship.col + i]:
-                if insert and ship_intersection_counter[s] == 0:
-                    valid_placements.remove(s)
-                elif not insert and ship_intersection_counter[s] == 1:
-                    valid_placements.append(s)
-                ship_intersection_counter[s] += increment
-    else:
-        for i in range(k):
-            for s in grid_ship_map[ship.row + i, ship.col]:
-                if insert and ship_intersection_counter[s] == 0:
-                    valid_placements.remove(s)
-                elif not insert and ship_intersection_counter[s] == 1:
-                    valid_placements.append(s)
-                ship_intersection_counter[s] += increment
-
 
 # Active Ships
 active_ships = []
 
 # Create an initial configuration of ships
+from helper_methods import update_valid_placements_and_ship_dictionary
+
 count = 0
 for r in range(n):
     if count >= q:
@@ -72,37 +50,23 @@ for r in range(n):
         active_ships.append(Ship(r, c, "h"))
 
         # Increment counter of all ships that intersect this region
-        update_valid_placements_and_ship_dictionary(Ship(r, c, "h"), insert=True)
+        update_valid_placements_and_ship_dictionary(
+            grid_ship_map,
+            valid_placements,
+            ship_intersection_counter,
+            k,
+            Ship(r, c, "h"),
+            insert=True,
+        )
 
         grid[r, c : c + k] = 1
         count += 1
         if count >= q:
             break
 
-# Check if ship collides in grid
-def check_collision(ship):
-    """
-    Accept a tuple (r,c,b) indicating the coordinate of the upper left block of the ship
-    and its orientation.
-    """
-    if ship.orientation == "v":
-        return np.any(grid[ship.row : ship.row + k, ship.col])
-    else:
-        return np.any(grid[ship.row, ship.col : ship.col + k])
-
-
-# Update grid with new ship
-def update_grid(ship, b):
-    """
-    Provide a ship and a binary to indicate whether to fill the region with 1 or 0.
-    """
-    if ship.orientation == "v":
-        grid[ship.row : ship.row + k, ship.col] = b
-    else:
-        grid[ship.row, ship.col : ship.col + k] = b
-
-
 # Run Gibbs sampler
+from helper_methods import update_grid
+
 import time
 
 samples = []
@@ -117,15 +81,29 @@ for i in range(iterations):
 
     for j, ship in enumerate(active_ships):
         # Remove the ship from the grid
-        update_grid(ship, 0)
-        update_valid_placements_and_ship_dictionary(ship, insert=False)
+        update_grid(grid, k, ship, 0)
+        update_valid_placements_and_ship_dictionary(
+            grid_ship_map,
+            valid_placements,
+            ship_intersection_counter,
+            k,
+            ship,
+            insert=False,
+        )
 
         # Sample a new ship
         m = np.random.randint(0, len(valid_placements))
         new_ship = valid_placements[m]
-        update_valid_placements_and_ship_dictionary(new_ship, insert=True)
+        update_valid_placements_and_ship_dictionary(
+            grid_ship_map,
+            valid_placements,
+            ship_intersection_counter,
+            k,
+            new_ship,
+            insert=True,
+        )
         active_ships[j] = new_ship
-        update_grid(new_ship, 1)
+        update_grid(grid, k, new_ship, 1)
 
     samples.append(grid.copy())
 
