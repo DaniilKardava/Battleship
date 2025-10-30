@@ -4,7 +4,7 @@ import numpy as np
 n = 20  # Grid dimension
 k = 5  # Ship length
 q = 40  # Number of ships
-beta = 0  # Penalty
+beta = 100  # Penalty
 
 grid = np.zeros((n, n))
 
@@ -18,11 +18,13 @@ total_arangements = horizontal_ships + vertical_ships
 from game_state_manager import GameStateManager
 import weight_methods
 
+weighting = weight_methods.HardLattice()
+
 game_state = GameStateManager(
     grid=grid,
     ships=total_arangements,
     active_ships=[],
-    weighting=weight_methods.hard_lattice,
+    weighting=weighting,
 )
 
 
@@ -44,7 +46,7 @@ game_state.update_active_ships()
 import time
 import cProfile, pstats
 
-iterations = 300
+iterations = 3000
 samples = []
 
 begin_sampling = time.time()
@@ -75,7 +77,7 @@ print(f"Sampling took: {end_sampling - begin_sampling:.0f}s")
 
 import sys
 
-sys.exit()
+# sys.exit()
 
 # Analyze
 burn_in = 100

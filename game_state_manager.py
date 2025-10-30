@@ -13,12 +13,13 @@ class GameStateManager:
         grid: initialize the game with a 2d array
         ships: array of possible ship arrangements
         active_ships: array of actively placed ships
-        weighting: a function for computing a ship's marginal weight
+        weighting: a weight class instance
         """
         self.grid = grid
         self.ships = ships  # Possible ship arrangements
         self.active_ships = active_ships  # Active ships, can include repeats
         self.temp_active_ships = []
+
         self.weighting = weighting
 
         self.ship_to_id = {
@@ -26,6 +27,8 @@ class GameStateManager:
         }  # Map ship to position in weights.
         self.id_to_ship = {i: s for s, i in self.ship_to_id.items()}
         self.squares_to_ship_ids = self.create_squares_to_ship_ids()
+
+        self.energies = self.compute_energies()
         self.marginals = self.compute_marginals()
 
     def create_squares_to_ship_ids(self):
@@ -46,6 +49,21 @@ class GameStateManager:
                 a.append(self.ship_to_id[ship])
         return squares_to_ship_ids
 
+    def compute_energies(self):
+        """
+        Calculate the energy of each ship given the current grid state.
+
+        return:
+        Energy array
+        """
+        energies = [0] * len(self.ships)
+        for ship in self.ships:
+            intersection = self.grid[ship.rows, ship.cols]
+            energies[self.ship_to_id[ship]] = self.weighting.compute_energy(
+                intersection
+            )
+        return energies
+
     def compute_marginals(self):
         """
         Calculate the unnormalized marginal probabilities of selecting a ship
@@ -56,33 +74,44 @@ class GameStateManager:
         Returns:
         Array of unnormalized marginals.
         """
+        energies = self.compute_energies()
         marginals = [0] * len(self.ships)
         for ship in self.ships:
-            intersection = self.grid[ship.rows, ship.cols]
-            marginals[self.ship_to_id[ship]] = self.weighting(intersection)
+            E = energies[self.ship_to_id[ship]]
+            marginals[self.ship_to_id[ship]] = self.weighting.compute_weight(E)
         return marginals
 
     # @profile
-    def update_marginals(self, ship):
+    def update_marginals(self, ship, inc):
         """
         Update the unnormalized marginal probabilities for a subset of ship
         orientations intersecting the squares occupied by the 'ship' parameter.
+
+        To avoid recomputing marginals from scratch, we require knowing what
+        change occured at those squares.
 
         See theory for when compute and update marginals are appropriate.
 
         Parameters:
         ship: a ship object
+        change: integer
 
         Returns:
         None
         """
-        intersection = self.squares_to_ship_ids[
-            ship.rows, ship.cols
-        ]  # Slice of array occupied by ship
-        ids = set().union(*intersection)
-        for id in ids:
+        uniq_ids = set()
+        for s in zip(ship.rows, ship.cols):
+            ids = self.squares_to_ship_ids[s]
+            uniq_ids = uniq_ids.union(ids)
+            for id in ids:
+                self.energies[id] = self.weighting.update_energy(
+                    self.energies[id], self.grid[s], inc
+                )
+
+        # Update weights once
+        for id in uniq_ids:
             ship = self.id_to_ship[id]
-            self.marginals[id] = self.weighting(self.grid[ship.rows, ship.cols])
+            self.marginals[id] = self.weighting.compute_weight(self.energies[id])
 
     def update_grid(self, ship, inc):
         """
@@ -109,7 +138,7 @@ class GameStateManager:
         """
         self.temp_active_ships.append(ship)
         self.update_grid(ship, inc=1)
-        self.update_marginals(ship)
+        self.update_marginals(ship, inc=1)
 
     def remove_ship(self, ship):
         """
@@ -122,7 +151,7 @@ class GameStateManager:
         None
         """
         self.update_grid(ship, inc=-1)
-        self.update_marginals(ship)
+        self.update_marginals(ship, inc=-1)
 
     def sample_ship(self):
         """

@@ -16,7 +16,14 @@ pairwise collisions at each square, or the size of the intersection between
 occupied squares and the new ship, or restricting the previous count to squares
 that had occupancy 1, respectively. 
 
+We need a further reformulation in how we calculate the marginal weights. We
+noted above that the total board energy can be computed as a sum over
+consecutively placed ships. Now we must compute a single ships contribution as a
+sum over the squares that it occupies. The weighting update can then be done one
+square at a time.
+
 Note that active ships list can contain repeats.
+Square values are assumed to always be positive. 
 
 To do:
 clean up the code and sync with github
@@ -24,6 +31,3 @@ Approximate Z
 Implement in C for speed
 Minimize shots to hit everything. 
 Maximizing information.
-
-Current bugs:
-The grid was not tracking overlap. 

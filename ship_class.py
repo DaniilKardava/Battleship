@@ -20,11 +20,11 @@ class Ship:
         """
         if self.orientation == "h":
             return [
-                self.corner_row,
-                range(self.corner_col, self.corner_col + self.length),
+                [self.corner_row] * self.length,
+                list(range(self.corner_col, self.corner_col + self.length)),
             ]
         else:
             return [
-                range(self.corner_row, self.corner_row + self.length),
-                self.corner_col,
+                list(range(self.corner_row, self.corner_row + self.length)),
+                [self.corner_col] * self.length,
             ]
