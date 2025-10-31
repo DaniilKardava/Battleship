@@ -1,105 +1,83 @@
 import numpy as np
-
-# Experiment parameters
-n = 10  # Grid dimension
-k = 1  # Ship length
-q = 10  # Number of ships
-beta = 5  # Penalty
-
-grid = np.zeros((n, n))
-
-# Valid ship arrangements
-from ship_class import Ship
-
-horizontal_ships = [Ship(r, c, "h", k) for r in range(n) for c in range(n - k + 1)]
-vertical_ships = [Ship(r, c, "v", k) for r in range(n - k + 1) for c in range(n)]
-total_arangements = horizontal_ships + vertical_ships
-
 from game_state_manager import GameStateManager
 import weight_methods
-
-weighting = weight_methods.OverflowBoltzmann(beta)
-
-game_state = GameStateManager(
-    grid=grid,
-    ships=total_arangements,
-    active_ships=[],
-    weighting=weighting,
-)
+from ship_class import Ship
 
 
-# Begin with a dense hard lattice packing of the ships.
-count = 0
-for r in range(n):
-    if count >= q:
-        break
-    for c in range(0, n - k + 1, k):
-        ship = Ship(r, c, "h", k)
-        game_state.place_ship(ship)
-        count += 1
+def main(n, k, q, beta, iterations, burn_in, total_arrangements, verbose):
+    """
+    Parameters:
+    n: integer grid dimension
+    k: integer ship length
+    q: number of ships
+    num_samples: integer number of samples
+    burn_in: number of samples to drop from analysis
+    total_arrangements: valid ship arrangements
+    verbose: boolean
+    """
+    grid = np.zeros((n, n))
+
+    weighting = weight_methods.OverflowBoltzmann(beta)
+
+    game_state = GameStateManager(
+        grid=grid,
+        ships=total_arrangements,
+        active_ships=[],
+        weighting=weighting,
+    )
+
+    # Begin with a dense hard lattice packing of the ships.
+    count = 0
+    for r in range(n):
         if count >= q:
             break
-
-game_state.update_active_ships()
-
-# Run Gibbs sampler
-import time
-import cProfile, pstats
-
-iterations = 10000
-samples = []
-
-begin_sampling = time.time()
-"""pr = cProfile.Profile()
-pr.enable()"""
-
-
-for i in range(iterations):
-
-    if i % 100 == 0:
-        print(f"Sampled: {i}")
-
-    for ship in game_state.active_ships:
-        game_state.remove_ship(ship)
-        new_ship = game_state.sample_ship()
-        game_state.place_ship(new_ship)
+        for c in range(0, n - k + 1, k):
+            ship = Ship(r, c, "h", k)
+            game_state.place_ship(ship)
+            count += 1
+            if count >= q:
+                break
 
     game_state.update_active_ships()
 
-    samples.append(game_state.grid.copy())
+    # Run Gibbs sampler
+    samples = []
 
-end_sampling = time.time()
+    for i in range(iterations):
 
-"""pr.disable()
-stats = pstats.Stats(pr).sort_stats("tottime")
-stats.print_stats(15)  # show top 15 entries"""
+        if verbose and i % 100 == 0:
+            print(i)
 
-print(f"Sampling took: {end_sampling - begin_sampling:.0f}s")
+        for ship in game_state.active_ships:
+            game_state.remove_ship(ship)
+            new_ship = game_state.sample_ship()
+            game_state.place_ship(new_ship)
 
-import sys
+        game_state.update_active_ships()
 
-# Analyze
-burn_in = 100
-samples = np.array(samples)
+        samples.append(game_state.grid.copy())
 
-# Compute sample energies
-square_energies = weighting.compute_square_energy(samples)
-grid_energies = np.sum(square_energies, axis=(1, 2))
+    # Analyze
+    samples = np.array(samples[burn_in:])
 
-avgs = [e / (i + 1) for i, e in enumerate(np.cumsum(grid_energies))]
-from matplotlib import pyplot as plt
+    # Compute sample energies
+    square_energies = weighting.compute_square_energy(samples)
+    grid_energies = np.sum(square_energies, axis=(1, 2))
 
-plt.plot(
-    avgs,
-)
-plt.show()
-
-sys.exit()
+    return np.mean(grid_energies)
 
 
-grid_averages = np.sum(samples[burn_in:], 0) / (iterations - burn_in)
+if __name__ == "__main__":
 
-from visualize import make_heatmap, animate_samples
+    n = 10
+    k = 1
+    q = 10
+    beta = 0
+    iterations = 1000
+    burn_in = 100
 
-make_heatmap(grid_averages)
-animate_samples(samples)
+    horizontal_ships = [Ship(r, c, "h", k) for r in range(n) for c in range(n - k + 1)]
+    vertical_ships = [Ship(r, c, "v", k) for r in range(n - k + 1) for c in range(n)]
+    total_arrangements = horizontal_ships + vertical_ships
+
+    main(n, k, q, beta, iterations, burn_in, total_arrangements, True)
