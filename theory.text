@@ -24,10 +24,3 @@ square at a time.
 
 Note that active ships list can contain repeats.
 Square values are assumed to always be positive. 
-
-To do:
-clean up the code and sync with github
-Approximate Z
-Implement in C for speed
-Minimize shots to hit everything. 
-Maximizing information.

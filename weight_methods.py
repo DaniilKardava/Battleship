@@ -1,5 +1,7 @@
 import math
 from abc import ABC, abstractmethod
+import numpy as np
+from scipy.special import comb
 
 
 class WeightingTemplate(ABC):
@@ -46,9 +48,17 @@ class WeightingTemplate(ABC):
         return:
         energy
         """
-        assert (
-            D != 0
-        )  # Later logic relies on this. I shouldn't call update if there is no update.
+        # Later logic relies on D not being 0. I shouldn't call update if there is no update.
+        pass
+
+    @abstractmethod
+    def compute_square_energy(self, arr):
+        """
+        Performs elementwise the energy contribution of a np array.
+
+        Parameters:
+        arr: np.array
+        """
         pass
 
 
@@ -66,8 +76,10 @@ class HardLattice(WeightingTemplate):
         return sum(intersection)
 
     def update_energy(self, E, S, D):
-        super().update_energy(E, S, D)
         return E + D
+
+    def compute_square_energy(self, arr):
+        return np.zeros_like(arr)
 
 
 class BinaryBoltzmann(WeightingTemplate):
@@ -87,11 +99,15 @@ class BinaryBoltzmann(WeightingTemplate):
         return sum(x == 1 for x in intersection)
 
     def update_energy(self, E, S, D):
-        super().update_energy(E, S, D)
         if S == 1:
             return E + 1
+        elif S - D == 1:
+            return E - 1
         else:
             return E
+
+    def compute_square_energy(self, arr):
+        return np.maximum(0, np.minimum(1, arr - 1))
 
 
 class PairwiseBoltzmann(WeightingTemplate):
@@ -110,14 +126,16 @@ class PairwiseBoltzmann(WeightingTemplate):
         return sum(intersection)
 
     def update_energy(self, E, S, D):
-        super().update_energy(E, S, D)
         return E + D
+
+    def compute_square_energy(self, arr):
+        return comb(arr, 2)
 
 
 class OverflowBoltzmann(WeightingTemplate):
     """
-    Weighting associated with n choose 2 energy per square with n occupants. The
-    ship contributes n units of energy for each square with n occupants.
+    Weighting associated with max(0, n-1) energy per square with n occupants. The
+    ship contributes 1 units of energy for each square with 1 or more occupants.
     """
 
     def __init__(self, beta):
@@ -130,10 +148,12 @@ class OverflowBoltzmann(WeightingTemplate):
         return sum([x > 0 for x in intersection])
 
     def update_energy(self, E, S, D):
-        super().update_energy(E, S, D)
         if S == 0:
             return E - 1
         elif S == 1 and D == 1:
             return E + 1
         else:
             return E
+
+    def compute_square_energy(self, arr):
+        return np.maximum(0, arr - 1)

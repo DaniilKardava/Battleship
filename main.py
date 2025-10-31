@@ -1,10 +1,10 @@
 import numpy as np
 
 # Experiment parameters
-n = 20  # Grid dimension
-k = 5  # Ship length
-q = 40  # Number of ships
-beta = 100  # Penalty
+n = 10  # Grid dimension
+k = 1  # Ship length
+q = 10  # Number of ships
+beta = 5  # Penalty
 
 grid = np.zeros((n, n))
 
@@ -18,7 +18,7 @@ total_arangements = horizontal_ships + vertical_ships
 from game_state_manager import GameStateManager
 import weight_methods
 
-weighting = weight_methods.HardLattice()
+weighting = weight_methods.OverflowBoltzmann(beta)
 
 game_state = GameStateManager(
     grid=grid,
@@ -46,12 +46,13 @@ game_state.update_active_ships()
 import time
 import cProfile, pstats
 
-iterations = 3000
+iterations = 10000
 samples = []
 
 begin_sampling = time.time()
 """pr = cProfile.Profile()
 pr.enable()"""
+
 
 for i in range(iterations):
 
@@ -77,11 +78,24 @@ print(f"Sampling took: {end_sampling - begin_sampling:.0f}s")
 
 import sys
 
-# sys.exit()
-
 # Analyze
 burn_in = 100
 samples = np.array(samples)
+
+# Compute sample energies
+square_energies = weighting.compute_square_energy(samples)
+grid_energies = np.sum(square_energies, axis=(1, 2))
+
+avgs = [e / (i + 1) for i, e in enumerate(np.cumsum(grid_energies))]
+from matplotlib import pyplot as plt
+
+plt.plot(
+    avgs,
+)
+plt.show()
+
+sys.exit()
+
 
 grid_averages = np.sum(samples[burn_in:], 0) / (iterations - burn_in)
 

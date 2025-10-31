@@ -102,7 +102,7 @@ class GameStateManager:
         uniq_ids = set()
         for s in zip(ship.rows, ship.cols):
             ids = self.squares_to_ship_ids[s]
-            uniq_ids = uniq_ids.union(ids)
+            uniq_ids.update(ids)
             for id in ids:
                 self.energies[id] = self.weighting.update_energy(
                     self.energies[id], self.grid[s], inc

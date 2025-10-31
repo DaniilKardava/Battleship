@@ -1,9 +1,8 @@
 from dataclasses import dataclass
+import numpy as np
 
 
 class Ship:
-    """ """
-
     def __init__(self, row, col, orientation, length):
         self.corner_row = row
         self.corner_col = col
@@ -20,11 +19,11 @@ class Ship:
         """
         if self.orientation == "h":
             return [
-                [self.corner_row] * self.length,
-                list(range(self.corner_col, self.corner_col + self.length)),
+                np.array([self.corner_row] * self.length),
+                np.array(range(self.corner_col, self.corner_col + self.length)),
             ]
         else:
             return [
-                list(range(self.corner_row, self.corner_row + self.length)),
-                [self.corner_col] * self.length,
+                np.array(range(self.corner_row, self.corner_row + self.length)),
+                np.array([self.corner_col] * self.length),
             ]
