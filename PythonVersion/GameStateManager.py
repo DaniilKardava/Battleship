@@ -53,8 +53,8 @@ class GameStateManager:
         """
         Calculate the energy of each ship given the current grid state.
 
-        return:
-        Energy array
+        Returns:
+        Array of energies
         """
         energies = [0] * len(self.ships)
         for ship in self.ships:
@@ -110,7 +110,6 @@ class GameStateManager:
 
         # Update weights once
         for id in uniq_ids:
-            ship = self.id_to_ship[id]
             self.marginals[id] = self.weighting.compute_weight(self.energies[id])
 
     def update_grid(self, ship, inc):

@@ -43,12 +43,11 @@ class WeightingTemplate(ABC):
         Parameters:
         E: current energy
         S: current square value
-        D: change in square value
+        D: change in square value, not 0.
 
         return:
         energy
         """
-        # Later logic relies on D not being 0. I shouldn't call update if there is no update.
         pass
 
     @abstractmethod

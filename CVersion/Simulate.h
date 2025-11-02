@@ -1,0 +1,19 @@
+#include <vector>
+#include <unsupported/Eigen/CXX11/Tensor>
+#include "Ship.h"
+#include "WeightMethods.h"
+
+/*
+Return sampled ship arrangements. Accepts precomputed positions to avoid
+needlessly recomputing them on each run.
+
+Parameters:
+n: integer grid dimension
+k: integer ship length
+q: number of ships
+iterations: integer number of samples
+weighting: method for marginal computation
+verbose: boolean
+positions: single ship positions
+*/
+Eigen::Tensor<int, 3> simulate(int n, int k, int q, int iterations, WeightingTemplate *weighting, bool verbose, std::vector<Ship> positions);

@@ -1,8 +1,7 @@
 import numpy as np
-from game_state_manager import GameStateManager
-import weight_methods
-from ship_class import Ship
-
+from GameStateManager import GameStateManager
+import WeightMethods as WeightMethods
+from Ship import Orientation, Ship, rows, cols
 
 def main(n, k, q, beta, iterations, burn_in, total_arrangements, verbose):
     """
@@ -10,14 +9,15 @@ def main(n, k, q, beta, iterations, burn_in, total_arrangements, verbose):
     n: integer grid dimension
     k: integer ship length
     q: number of ships
-    num_samples: integer number of samples
+    beta: penalty
+    iterations: integer number of samples
     burn_in: number of samples to drop from analysis
-    total_arrangements: valid ship arrangements
+    total_arrangements: possible ship positions
     verbose: boolean
     """
     grid = np.zeros((n, n))
 
-    weighting = weight_methods.OverflowBoltzmann(beta)
+    weighting = WeightMethods.OverflowBoltzmann(beta)
 
     game_state = GameStateManager(
         grid=grid,
@@ -32,7 +32,7 @@ def main(n, k, q, beta, iterations, burn_in, total_arrangements, verbose):
         if count >= q:
             break
         for c in range(0, n - k + 1, k):
-            ship = Ship(r, c, "h", k)
+            ship = Ship(r, c, Orientation.H, k, rows(Orientation.H, r, k), cols(Orientation.H, c, k))
             game_state.place_ship(ship)
             count += 1
             if count >= q:
@@ -69,15 +69,15 @@ def main(n, k, q, beta, iterations, burn_in, total_arrangements, verbose):
 
 if __name__ == "__main__":
 
-    n = 10
-    k = 1
-    q = 10
+    n = 20
+    k = 5
+    q = 40
     beta = 0
-    iterations = 1000
+    iterations = 3000
     burn_in = 100
 
-    horizontal_ships = [Ship(r, c, "h", k) for r in range(n) for c in range(n - k + 1)]
-    vertical_ships = [Ship(r, c, "v", k) for r in range(n - k + 1) for c in range(n)]
+    horizontal_ships = [Ship(r, c, Orientation.H, k, rows(Orientation.H, r, k), cols(Orientation.H, c, k)) for r in range(n) for c in range(n - k + 1)]
+    vertical_ships = [Ship(r, c, Orientation.V, k, rows(Orientation.V, r, k), cols(Orientation.V, c, k)) for r in range(n - k + 1) for c in range(n)]
     total_arrangements = horizontal_ships + vertical_ships
 
     main(n, k, q, beta, iterations, burn_in, total_arrangements, True)
