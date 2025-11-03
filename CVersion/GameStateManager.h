@@ -76,7 +76,7 @@ public:
     Returns:
     None
     */
-    void update_marginals(Ship ship, int inc);
+    void update_marginals(Ship &ship, int inc);
 
     /*
     Increment grid cells occupied by ship by amount inc.
@@ -88,7 +88,7 @@ public:
     Returns:
     None
     */
-    void update_grid(Ship ship, int inc);
+    void update_grid(Ship &ship, int inc);
 
     /*
     Update grid and marginals associated with new ship placement.
@@ -99,7 +99,7 @@ public:
     Returns:
     None
     */
-    void place_ship(Ship ship);
+    void place_ship(Ship &ship);
 
     /*
     Update grid and marginals associated with new ship placement.
@@ -110,7 +110,7 @@ public:
     Returns:
     None
     */
-    void remove_ship(Ship ship);
+    void remove_ship(Ship &ship);
 
     /*
     Sample a ship from the marginal distribution.

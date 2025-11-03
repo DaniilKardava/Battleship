@@ -59,7 +59,7 @@ vector<float> GameStateManager::compute_marginals() const
     return marginals;
 }
 
-void GameStateManager::update_marginals(Ship ship, int inc)
+void GameStateManager::update_marginals(Ship &ship, int inc)
 {
     unordered_set<int> uniq_ids;
     for (int i = 0; i < ship.rows.size(); i++)
@@ -77,7 +77,7 @@ void GameStateManager::update_marginals(Ship ship, int inc)
     }
 }
 
-void GameStateManager::update_grid(Ship ship, int inc)
+void GameStateManager::update_grid(Ship &ship, int inc)
 {
     for (int i = 0; i < ship.rows.size(); i++)
     {
@@ -85,14 +85,14 @@ void GameStateManager::update_grid(Ship ship, int inc)
     }
 }
 
-void GameStateManager::place_ship(Ship ship)
+void GameStateManager::place_ship(Ship &ship)
 {
     temp_active_ships.push_back(ship);
     update_grid(ship, 1);
     update_marginals(ship, 1);
 }
 
-void GameStateManager::remove_ship(Ship ship)
+void GameStateManager::remove_ship(Ship &ship)
 {
     update_grid(ship, -1);
     update_marginals(ship, -1);
@@ -100,8 +100,12 @@ void GameStateManager::remove_ship(Ship ship)
 
 Ship GameStateManager::sample_ship()
 {
+    /*
+    I can avoid reinit, but building is still n after any weight change. Use
+    more efficient sampler that supports frequent weight changes.
+    */
     discrete_distribution<> dist(marginals.begin(), marginals.end());
-    return ships[dist(gen)];
+    return ships[dist(gen)]; // vector look up is constant, sampling is log n.
 }
 
 void GameStateManager::update_active_ships()
