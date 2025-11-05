@@ -2,14 +2,13 @@
 #include "WeightMethods.h"
 #include "GameStateManager.h"
 #include <iostream>
+#include <chrono>
 
-using namespace Eigen;
 using namespace std;
 
-Tensor<int, 3> simulate(int n, int k, int q, int iterations, WeightingTemplate *weighting, bool verbose, vector<Ship> positions)
+vector<int> simulate(int n, int k, int q, int iterations, WeightingTemplate *weighting, bool verbose, vector<Ship> positions)
 {
-    Tensor<int, 2> grid(n, n);
-    grid.setConstant(0);
+    vector<int> grid(n * n);
 
     vector<Ship> active_ships;
 
@@ -35,7 +34,10 @@ Tensor<int, 3> simulate(int n, int k, int q, int iterations, WeightingTemplate *
     }
     manager.update_active_ships();
 
-    Tensor<int, 3> samples(n, n, iterations);
+    vector<int> samples(n * n * iterations);
+    int insertion_idx = 0;
+
+    auto start = chrono::system_clock::now();
 
     for (int i = 0; i < iterations; i++)
     {
@@ -45,7 +47,7 @@ Tensor<int, 3> simulate(int n, int k, int q, int iterations, WeightingTemplate *
             cout << i << endl;
         }
 
-        for (Ship ship : manager.active_ships)
+        for (Ship &ship : manager.active_ships)
         {
             manager.remove_ship(ship);
             Ship new_ship = manager.sample_ship();
@@ -53,8 +55,14 @@ Tensor<int, 3> simulate(int n, int k, int q, int iterations, WeightingTemplate *
         }
         manager.update_active_ships();
 
-        samples.chip(i, 2) = manager.grid;
+        copy(manager.grid.begin(), manager.grid.end(), samples.begin() + insertion_idx);
+        insertion_idx += manager.grid.size();
     }
+
+    auto end = chrono::system_clock::now();
+    chrono::duration<double> diff = end - start;
+
+    cout << diff.count();
 
     return samples;
 }

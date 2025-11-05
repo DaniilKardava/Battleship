@@ -1,5 +1,4 @@
 #include <vector>
-#include <unsupported/Eigen/CXX11/Tensor>
 #include "Ship.h"
 #include "WeightMethods.h"
 
@@ -16,4 +15,4 @@ weighting: method for marginal computation
 verbose: boolean
 positions: single ship positions
 */
-Eigen::Tensor<int, 3> simulate(int n, int k, int q, int iterations, WeightingTemplate *weighting, bool verbose, std::vector<Ship> positions);
+std::vector<int> simulate(int n, int k, int q, int iterations, WeightingTemplate *weighting, bool verbose, std::vector<Ship> positions);

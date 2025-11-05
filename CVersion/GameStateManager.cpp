@@ -1,11 +1,11 @@
 #include "GameStateManager.h"
 #include <unordered_set>
 #include <random>
+#include <cmath>
 
 using namespace std;
-using namespace Eigen;
 
-GameStateManager::GameStateManager(Tensor<int, 2> grid, vector<Ship> ships, vector<Ship> active_ships, WeightingTemplate *weighting, int seed) : grid(grid), ships(ships), active_ships(active_ships), weighting(weighting), seed(seed)
+GameStateManager::GameStateManager(vector<int> grid, vector<Ship> ships, vector<Ship> active_ships, WeightingTemplate *weighting, int seed) : grid(grid), grid_dim(sqrt(grid.size())), ships(ships), active_ships(active_ships), weighting(weighting), seed(seed)
 {
     for (int i = 0; i < ships.size(); i++)
     {
@@ -18,14 +18,14 @@ GameStateManager::GameStateManager(Tensor<int, 2> grid, vector<Ship> ships, vect
     gen.seed(seed);
 }
 
-Tensor<vector<int>, 2> GameStateManager::create_squares_to_ship_ids() const
+vector<vector<int>> GameStateManager::create_squares_to_ship_ids() const
 {
-    Tensor<vector<int>, 2> squares_to_ship_ids(grid.dimensions());
+    vector<vector<int>> squares_to_ship_ids(grid.size());
     for (const Ship &ship : ships)
     {
         for (int i = 0; i < ship.rows.size(); i++)
         {
-            squares_to_ship_ids(ship.rows[i], ship.cols[i]).push_back(ship_to_id.at(ship));
+            squares_to_ship_ids[linearize(ship.rows[i], ship.cols[i])].push_back(ship_to_id.at(ship));
         }
     }
     return squares_to_ship_ids;
@@ -39,7 +39,7 @@ vector<int> GameStateManager::compute_energies() const
         vector<int> intersection;
         for (int i = 0; i < ship.rows.size(); i++)
         {
-            intersection.push_back(grid(ship.rows[i], ship.cols[i]));
+            intersection.push_back(grid[linearize(ship.rows[i], ship.cols[i])]);
         }
         energies[ship_to_id.at(ship)] = weighting->compute_energy(intersection); // [] is not const
     }
@@ -64,11 +64,11 @@ void GameStateManager::update_marginals(Ship &ship, int inc)
     unordered_set<int> uniq_ids;
     for (int i = 0; i < ship.rows.size(); i++)
     {
-        vector<int> ids = squares_to_ship_ids(ship.rows[i], ship.cols[i]);
-        uniq_ids.insert(ids.begin(), ids.end());
+        vector<int> ids = squares_to_ship_ids[linearize(ship.rows[i], ship.cols[i])]; // This is allegedly copying.
+        uniq_ids.insert(ids.begin(), ids.end());                                      // This still feels inefficient
         for (int id : ids)
         {
-            energies[id] = weighting->update_energy(energies[id], grid(ship.rows[i], ship.cols[i]), inc);
+            energies[id] = weighting->update_energy(energies[id], grid[linearize(ship.rows[i], ship.cols[i])], inc);
         }
     }
     for (int id : uniq_ids)
@@ -81,7 +81,7 @@ void GameStateManager::update_grid(Ship &ship, int inc)
 {
     for (int i = 0; i < ship.rows.size(); i++)
     {
-        grid(ship.rows[i], ship.cols[i]) += inc;
+        grid[linearize(ship.rows[i], ship.cols[i])] += inc;
     }
 }
 
@@ -111,4 +111,9 @@ Ship GameStateManager::sample_ship()
 void GameStateManager::update_active_ships()
 {
     active_ships = move(temp_active_ships);
+}
+
+int GameStateManager::linearize(int r, int c) const
+{
+    return r * grid_dim + c;
 }

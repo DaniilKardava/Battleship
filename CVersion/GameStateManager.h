@@ -1,4 +1,3 @@
-#include <unsupported/Eigen/CXX11/Tensor>
 #include "Ship.h"
 #include "WeightMethods.h"
 #include <unordered_map>
@@ -8,7 +7,9 @@ class GameStateManager
 {
     // Maintains grid state and marginal ship distributions.
 public:
-    Eigen::Tensor<int, 2> grid;
+    std::vector<int> grid;
+    int grid_dim;
+
     std::vector<Ship> ships;
     std::vector<Ship> active_ships;
     std::vector<Ship> temp_active_ships;
@@ -16,7 +17,7 @@ public:
 
     std::unordered_map<Ship, int> ship_to_id;
     std::unordered_map<int, Ship> id_to_ship;
-    Eigen::Tensor<std::vector<int>, 2> squares_to_ship_ids;
+    std::vector<std::vector<int>> squares_to_ship_ids;
 
     std::vector<int> energies;
     std::vector<float> marginals;
@@ -31,7 +32,7 @@ public:
     active_ships: array of actively placed ships
     weighting: a weight class instance
     */
-    GameStateManager(Eigen::Tensor<int, 2> grid, std::vector<Ship> ships, std::vector<Ship> active_ships, WeightingTemplate *weighting, int seed = std::random_device()());
+    GameStateManager(std::vector<int> grid, std::vector<Ship> ships, std::vector<Ship> active_ships, WeightingTemplate *weighting, int seed = std::random_device()());
 
     /*
     Assign squares to the ship orientations that intersect it.
@@ -39,7 +40,7 @@ public:
     Returns:
     Square array containing lists of ships
     */
-    Eigen::Tensor<std::vector<int>, 2> create_squares_to_ship_ids() const;
+    std::vector<std::vector<int>> create_squares_to_ship_ids() const;
 
     /*
     Calculate the energy of each ship given the current grid state.
@@ -129,4 +130,15 @@ public:
     None
     */
     void update_active_ships();
+
+    /*
+    Flatten n-tuple coordinates.
+
+    Parameters:
+    int r: row index
+    int c: col index
+    Return:
+    int: row major index
+    */
+    int linearize(int r, int c) const;
 };

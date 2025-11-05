@@ -3,7 +3,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace Eigen;
 
 int main()
 {
@@ -49,7 +48,7 @@ int main()
         }
     }
 
-    Tensor<int, 3> samples = simulate(n, k, q, iterations, weighting, verbose, positions);
+    vector<int> samples = simulate(n, k, q, iterations, weighting, verbose, positions);
 
     return 0;
 }
