@@ -61,19 +61,14 @@ vector<float> GameStateManager::compute_marginals() const
 
 void GameStateManager::update_marginals(Ship &ship, int inc)
 {
-    unordered_set<int> uniq_ids;
     for (int i = 0; i < ship.rows.size(); i++)
     {
         vector<int> ids = squares_to_ship_ids[linearize(ship.rows[i], ship.cols[i])]; // This is allegedly copying.
-        uniq_ids.insert(ids.begin(), ids.end());                                      // This still feels inefficient
         for (int id : ids)
         {
             energies[id] = weighting->update_energy(energies[id], grid[linearize(ship.rows[i], ship.cols[i])], inc);
+            marginals[id] = weighting->compute_weight(energies[id]);
         }
-    }
-    for (int id : uniq_ids)
-    {
-        marginals[id] = weighting->compute_weight(energies[id]);
     }
 }
 
