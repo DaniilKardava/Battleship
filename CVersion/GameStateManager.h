@@ -27,12 +27,11 @@ public:
 
     /*
     Parameters:
-    grid: initialize the game with a rank 2 tensor
+    dim: int dimension
     ships: array of possible ship arrangements
-    active_ships: array of actively placed ships
     weighting: a weight class instance
     */
-    GameStateManager(std::vector<int> grid, std::vector<Ship> ships, std::vector<Ship> active_ships, WeightingTemplate *weighting, int seed = std::random_device()());
+    GameStateManager(int dim, std::vector<Ship> ships, WeightingTemplate *weighting, int seed = std::random_device()());
 
     /*
     Assign squares to the ship orientations that intersect it.

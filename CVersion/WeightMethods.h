@@ -1,13 +1,14 @@
 #pragma once
 #include <vector>
 #include <cmath>
-#include <unsupported/Eigen/CXX11/Tensor>
 
 class WeightingTemplate
 {
     // Blueprint for weighting mechanisms.
 
 public:
+    float beta;
+
     /*
     Compute the marginal ship weight from an integer summary.
 
@@ -28,18 +29,18 @@ public:
     Returns:
     Energy
     */
-    virtual int compute_energy(std::vector<int> intersection) const = 0;
+    virtual int compute_energy(std::vector<int> &intersection) const = 0;
 
     /*
-    Computes the elementwise energy contribution on a rank 3 tensor.
+    Computes the energy of a square.
 
     Parameters:
-    samples: rank 3 tensor
+    int: grid entry.
 
     Returns:
-    tensor, 3: elementwise operation applied to input.
+    int
     */
-    virtual Eigen::Tensor<int, 3> compute_square_energy(Eigen::Tensor<int, 3> &arr) const = 0;
+    virtual int compute_square_energy(int s) const = 0;
 
     /*
     Update the energy given a change at a single square.
@@ -65,9 +66,9 @@ class HardLattice : public WeightingTemplate
 public:
     float compute_weight(int E) const override;
 
-    int compute_energy(std::vector<int> intersection) const override;
+    int compute_energy(std::vector<int> &intersection) const override;
 
-    Eigen::Tensor<int, 3> compute_square_energy(Eigen::Tensor<int, 3> &arr) const override;
+    int compute_square_energy(int s) const override;
 
     int update_energy(int E, int S, int D) const override;
 };
@@ -80,15 +81,13 @@ class BinaryBoltzmann : public WeightingTemplate
     placement of this ship.
     */
 public:
-    float beta;
-
     BinaryBoltzmann(float beta);
 
     float compute_weight(int E) const override;
 
-    int compute_energy(std::vector<int> intersection) const override;
+    int compute_energy(std::vector<int> &intersection) const override;
 
-    Eigen::Tensor<int, 3> compute_square_energy(Eigen::Tensor<int, 3> &arr) const override;
+    int compute_square_energy(int s) const override;
 
     int update_energy(int E, int S, int D) const override;
 };
@@ -101,16 +100,15 @@ class PairwiseBoltzmann : public WeightingTemplate
     */
 
 public:
-    float beta;
     PairwiseBoltzmann(float beta);
 
     float compute_weight(int E) const override;
 
-    int compute_energy(std::vector<int> intersection) const override;
+    int compute_energy(std::vector<int> &intersection) const override;
 
     int update_energy(int E, int S, int D) const override;
 
-    Eigen::Tensor<int, 3> compute_square_energy(Eigen::Tensor<int, 3> &arr) const override;
+    int compute_square_energy(int s) const override;
 };
 
 class OverflowBoltzmann : public WeightingTemplate
@@ -121,14 +119,13 @@ class OverflowBoltzmann : public WeightingTemplate
     */
 
 public:
-    float beta;
     OverflowBoltzmann(float beta);
 
     float compute_weight(int E) const override;
 
-    int compute_energy(std::vector<int> intersections) const override;
+    int compute_energy(std::vector<int> &intersections) const override;
 
     int update_energy(int E, int S, int D) const override;
 
-    Eigen::Tensor<int, 3> compute_square_energy(Eigen::Tensor<int, 3> &arr) const override;
+    int compute_square_energy(int s) const override;
 };

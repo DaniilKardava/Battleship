@@ -3,16 +3,15 @@
 #include "GameStateManager.h"
 #include <iostream>
 #include <chrono>
+#include <tuple>
 
 using namespace std;
 
-vector<int> simulate(int n, int k, int q, int iterations, WeightingTemplate *weighting, bool verbose, vector<Ship> positions)
+tuple<vector<int>, vector<int>> simulate(int n, int k, int q, int iterations, WeightingTemplate *weighting, bool verbose, vector<Ship> positions, bool record_samples)
 {
-    vector<int> grid(n * n);
-
     vector<Ship> active_ships;
 
-    GameStateManager manager = GameStateManager(grid, positions, active_ships, weighting);
+    GameStateManager manager = GameStateManager(n, positions, weighting);
 
     int count = 0;
     for (int r = 0; r < n; r++)
@@ -34,14 +33,20 @@ vector<int> simulate(int n, int k, int q, int iterations, WeightingTemplate *wei
     }
     manager.update_active_ships();
 
-    vector<int> samples(n * n * iterations);
+    vector<int> energies(iterations);
+    vector<int> samples;
+
+    if (record_samples)
+    {
+        samples.resize(n * n * iterations);
+    }
+
     int insertion_idx = 0;
 
     auto start = chrono::system_clock::now();
 
     for (int i = 0; i < iterations; i++)
     {
-
         if (verbose && i % 100 == 0)
         {
             cout << i << endl;
@@ -55,14 +60,28 @@ vector<int> simulate(int n, int k, int q, int iterations, WeightingTemplate *wei
         }
         manager.update_active_ships();
 
-        copy(manager.grid.begin(), manager.grid.end(), samples.begin() + insertion_idx);
-        insertion_idx += manager.grid.size();
+        // Compute energy
+        int E = 0;
+        for (int i = 0; i < manager.grid.size(); i++)
+        {
+            E += weighting->compute_square_energy(manager.grid[i]);
+        }
+        energies[i] = E;
+
+        if (record_samples)
+        {
+            copy(manager.grid.begin(), manager.grid.end(), samples.begin() + insertion_idx);
+            insertion_idx += n * n;
+        }
     }
 
     auto end = chrono::system_clock::now();
     chrono::duration<double> diff = end - start;
 
-    cout << diff.count();
+    if (verbose)
+    {
+        cout << diff.count() << endl;
+    }
 
-    return samples;
+    return tuple(energies, samples);
 }

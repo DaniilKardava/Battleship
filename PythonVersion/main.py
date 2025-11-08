@@ -2,6 +2,7 @@ import numpy as np
 from GameStateManager import GameStateManager
 import WeightMethods as WeightMethods
 from Ship import Orientation, Ship, rows, cols
+from visualize import make_heatmap
 
 def main(n, k, q, beta, iterations, burn_in, total_arrangements, verbose):
     """
@@ -64,6 +65,8 @@ def main(n, k, q, beta, iterations, burn_in, total_arrangements, verbose):
     square_energies = weighting.compute_square_energy(samples)
     grid_energies = np.sum(square_energies, axis=(1, 2))
 
+    make_heatmap(np.sum(samples, axis = 0) / (iterations / burn_in))
+
     return np.mean(grid_energies)
 
 
@@ -72,7 +75,7 @@ if __name__ == "__main__":
     n = 20
     k = 5
     q = 40
-    beta = 0
+    beta = 100
     iterations = 3000
     burn_in = 100
 

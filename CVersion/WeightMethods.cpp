@@ -1,7 +1,7 @@
 #include "WeightMethods.h"
+#include <cmath>
 
 using namespace std;
-using namespace Eigen;
 
 // HardLattice Implementation
 float HardLattice::compute_weight(int E) const
@@ -16,7 +16,7 @@ float HardLattice::compute_weight(int E) const
     }
 }
 
-int HardLattice::compute_energy(vector<int> intersection) const
+int HardLattice::compute_energy(vector<int> &intersection) const
 {
     int E = 0;
     for (int i = 0; i < intersection.size(); i++)
@@ -26,9 +26,9 @@ int HardLattice::compute_energy(vector<int> intersection) const
     return E;
 }
 
-Tensor<int, 3> HardLattice::compute_square_energy(Tensor<int, 3> &arr) const
+int HardLattice::compute_square_energy(int s) const
 {
-    return arr.constant(0);
+    return 0;
 }
 
 int HardLattice::update_energy(int E, int S, int D) const
@@ -37,19 +37,22 @@ int HardLattice::update_energy(int E, int S, int D) const
 }
 
 // BinaryBoltzmann implementation
-BinaryBoltzmann::BinaryBoltzmann(float beta) : beta(beta) {};
+BinaryBoltzmann::BinaryBoltzmann(float beta)
+{
+    this->beta = beta;
+}
 
 float BinaryBoltzmann::compute_weight(int E) const
 {
     return exp(-beta * E);
 }
 
-int BinaryBoltzmann::compute_energy(vector<int> intersection) const
+int BinaryBoltzmann::compute_energy(vector<int> &intersection) const
 {
     int E = 0;
     for (int i = 0; i < intersection.size(); i++)
     {
-        if (E == 1)
+        if (intersection[i] == 1)
         {
             E++;
         }
@@ -57,20 +60,22 @@ int BinaryBoltzmann::compute_energy(vector<int> intersection) const
     return E;
 }
 
-Tensor<int, 3> BinaryBoltzmann::compute_square_energy(Tensor<int, 3> &arr) const
+int BinaryBoltzmann::compute_square_energy(int s) const
 {
-    return arr.constant(0).cwiseMax(arr.constant(1).cwiseMax(arr - 1));
+    return max(0, min(1, s - 1));
 }
 
 int BinaryBoltzmann::update_energy(int E, int S, int D) const
 {
     if (S == 1)
     {
-        return E++;
+        E++;
+        return E;
     }
-    else if (S - D == 1)
+    else if ((S - D) == 1)
     {
-        return E--;
+        E--;
+        return E;
     }
     else
     {
@@ -79,14 +84,17 @@ int BinaryBoltzmann::update_energy(int E, int S, int D) const
 }
 
 // PairwiseBoltzmann implementation
-PairwiseBoltzmann::PairwiseBoltzmann(float beta) : beta(beta) {};
+PairwiseBoltzmann::PairwiseBoltzmann(float beta)
+{
+    this->beta = beta;
+}
 
 float PairwiseBoltzmann::compute_weight(int E) const
 {
     return exp(-beta * E);
 }
 
-int PairwiseBoltzmann::compute_energy(vector<int> intersection) const
+int PairwiseBoltzmann::compute_energy(vector<int> &intersection) const
 {
     int E = 0;
     for (int i = 0; i < intersection.size(); i++)
@@ -101,21 +109,23 @@ int PairwiseBoltzmann::update_energy(int E, int S, int D) const
     return E + D;
 }
 
-Tensor<int, 3> PairwiseBoltzmann::compute_square_energy(Tensor<int, 3> &arr) const
+int PairwiseBoltzmann::compute_square_energy(int s) const
 {
-    return arr.unaryExpr([](int n)
-                         { return n * (n - 1) / 2; });
+    return s * (s - 1) / 2;
 }
 
 // OverflowBoltzmann implementation
-OverflowBoltzmann::OverflowBoltzmann(float beta) : beta(beta) {};
+OverflowBoltzmann::OverflowBoltzmann(float beta)
+{
+    this->beta = beta;
+}
 
 float OverflowBoltzmann::compute_weight(int E) const
 {
     return exp(-beta * E);
 }
 
-int OverflowBoltzmann::compute_energy(vector<int> intersections) const
+int OverflowBoltzmann::compute_energy(vector<int> &intersections) const
 {
     int E = 0;
     for (int i = 0; i < intersections.size(); i++)
@@ -144,7 +154,7 @@ int OverflowBoltzmann::update_energy(int E, int S, int D) const
     }
 }
 
-Tensor<int, 3> OverflowBoltzmann::compute_square_energy(Tensor<int, 3> &arr) const
+int OverflowBoltzmann::compute_square_energy(int s) const
 {
-    return arr.constant(0).cwiseMax(arr - 1);
+    return max(0, s - 1);
 }

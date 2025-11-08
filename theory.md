@@ -1,32 +1,111 @@
-The transition rule is to pick up a ship and place it down randomly anywhere that is available.  
-This rule satisfies detailed balance since the distribution $\pi$ is uniform and the transition kernel is symmetric.
+# Gibbs Sampling and Boltzmann Weighting for Ship Configurations
 
-We can similarly show that the Boltzmann distribution satisfies detailed balance in the same sampling scheme.
+## Integer Labeling and Distribution
 
-Boltzmann weighting can take different forms — one where energy counts pairwise intersections $\binom{n}{2}$,  
-a second where it counts the excess $\max(0, n - 1)$, and a third where it counts the indicator of excess  
-$\max(0, \min(1, n - 1))$, where $n$ are the occupants on a square.
+Assign an integer labeling to individual ship positions and let  
+$\pi$ be a distribution over integer $n$-tuples, where $n$ is the number of ships.
 
-Weighting methods 1, 2, and 3 are naturally computed over the squares, but can also be seen as a sum formed  
-by placing ships down one by one — adding the new pairwise collisions at each square, or the size of the  
-intersection between occupied squares and the new ship, or restricting the previous count to squares that  
-had occupancy $1$, respectively.
+---
 
-We need a further reformulation in how we calculate the marginal weights.  
-We noted above that the total board energy can be computed as a sum over consecutively placed ships.  
-Now we must compute a single ship’s contribution as a sum over the squares that it occupies.  
-The weighting update can then be done one square at a time.
+## Detailed Balance in the Gibbs Sampler
 
-Note that the active ships list can contain repeats.  
-Square values are assumed to always be positive.
+The Gibbs sampler satisfies **detailed balance**, which can be verified by expressing the joint probability as the product of:
+
+1. A single new draw conditioned on the remaining ship positions, and
+2. The joint probability of the remaining ship positions.
+
+---
+
+## Boltzmann Weighting Variants
+
+Boltzmann weighting can take different forms:
+
+1. **Pairwise intersections:**  
+   Energy counts all pairwise intersections $\binom{n}{2}$.
+
+2. **Excess count:**  
+   Energy counts the excess $\max(0, n - 1)$.
+
+3. **Indicator of excess:**  
+   Energy counts the indicator $\max(0, \min(1, n - 1))$.
+
+Here, $n$ represents the number of occupants on a square.
+
+---
+
+## Computing Energy Incrementally
+
+Weighting methods (1–3) are naturally computed over the squares but can also be viewed **as cumulative sums** when ships are placed one by one:
+
+- **Pairwise intersections:** Add new pairwise collisions at each square.
+- **Excess count:** Add the size of the intersection between occupied squares and the new ship.
+- **Indicator of excess:** Restrict the previous count to squares that had occupancy 1.
+
+---
+
+## Reformulating Marginal Weights
+
+We need a further reformulation in how marginal weights are computed.
+
+- The **total board energy** can be expressed as a sum over consecutively placed ships.
+- A **single ship’s contribution** can then be computed as a sum over the squares it occupies.
+- The **weighting update** can therefore be applied one square at a time.
+
+---
+
+## Possible Fractal Behavior
 
 Fractals somehow?
 
-We can put a crude bound on the average energy.  
-The probability that we observe a non–ground state is bounded by  
-$\dfrac{w_2}{w_1 + w_2}$ where $w_1$ and $w_2$ are $|\Omega_0|$ and $(T - |\Omega_0|)\, e^{-\beta}$ respectively,  
-where $T$ is the total number of states (since $w_2$ is greater than $w_{\text{true}}$ and $x/(1+x)$ is increasing).  
-Then the expected energy is bounded above by the max energy times  
-$\dfrac{w_1}{w_1 + w_2} \le E_{\max} \cdot \dfrac{T e^{-\beta}}{|\Omega_0|} \le C e^{-\beta}$ for some $\beta$.
+---
 
-I have a good estimate on the probability of observing a non-zero energy state. I have a bound on the expected energy as a result.
+## Bounding the Average Energy
+
+We can place a crude bound on the **average energy**.
+
+The probability of observing a non–ground state is bounded by:
+
+\[
+\frac{w_2}{w_1 + w_2}
+\]
+
+where
+
+- $w_1 = |\Omega_0|$,
+- $w_2 = (T - |\Omega_0|)\, e^{-\beta}$, and
+- $T$ is the total number of states.
+
+Since $w_2 > w_{\text{true}}$ and $x / (1 + x)$ is increasing, we obtain:
+
+\[
+\mathbb{E}[E] \le E*{\max} \cdot \frac{w_1}{w_1 + w_2}
+\le E*{\max} \cdot \frac{T e^{-\beta}}{|\Omega_0|}
+\le C e^{-\beta}
+\]
+
+for some constant $C$.
+
+---
+
+## Example: 10×10 Grid with 10 Ships
+
+For a 10×10 grid with 10 ships, the **integral over energy** is approximately −0.4649.
+
+Let:
+
+- $Z(\infty)$ denote the number of distinct length-10 tuples taking values in $\{1, \ldots, 100\}$, and
+- $Z(0)$ denote the number of **zero-overlap** arrangements with distinct ships.
+
+Then:
+
+\[
+\log Z(\infty) = \log Z(0) - \int_0^{\infty} -\langle E \rangle(\beta)\, d\beta
+\]
+
+and equivalently,
+
+\[
+\frac{Z(\infty)}{Z(0)} = \exp\!\left(-\!\int \langle E \rangle(\beta)\, d\beta\right)
+\]
+
+which checks out.
