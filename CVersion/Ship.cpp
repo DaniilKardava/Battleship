@@ -4,7 +4,7 @@
 
 using namespace std;
 
-Ship::Ship(int r, int c, Orientation o, int len) : r(r), c(c), o(o), len(len), rows(compute_rows()), cols(compute_cols()) {};
+Ship::Ship(int id, int r, int c, Orientation o, int len) : id(id), r(r), c(c), o(o), len(len), rows(compute_rows()), cols(compute_cols()) {};
 
 bool Ship::operator==(const Ship &other) const
 {
@@ -49,4 +49,16 @@ vector<int> Ship::compute_cols()
         }
     }
     return cols;
+}
+
+int compute_id(int n, int r, int c, Orientation o, int k)
+{
+    if (o == Orientation::H)
+    {
+        return r * (n - k + 1) + c;
+    }
+    else
+    {
+        return n * (n - k + 1) + c * (n - k + 1) + r;
+    }
 }

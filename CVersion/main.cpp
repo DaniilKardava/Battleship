@@ -1,8 +1,9 @@
-#include "Simulate.h"
+#include "GameStateManager.h"
 #include "WeightMethods.h"
 #include <iostream>
 #include <fstream>
 #include <tuple>
+#include "main_helpers.h"
 
 using namespace std;
 
@@ -47,54 +48,74 @@ int main()
     cout << "Beta inc:";
     cin >> inc;
 
-    WeightingTemplate *weighting = new BinaryBoltzmann(0);
+    int period;
+    cout << "Print period:";
+    cin >> period;
+
+    WeightingTemplate *weighting = new OverflowBoltzmann(0);
 
     // Compute positions
-    vector<Ship> positions;
+    vector<Ship> ships;
+    ships.reserve(2 * n * (n - k + 1));
+    compute_total_positions(n, k, ships);
+    const vector<Ship> &frozen_ships = ships; // Don't move ships but allow mutation of content.
 
-    // Horizontal
-    for (int r = 0; r < n; r++)
-    {
-        for (int c = 0; c < n - k + 1; c++)
-        {
-            positions.push_back(Ship(r, c, Orientation::H, k));
-        }
-    }
-    // Vertical
-    for (int c = 0; c < n; c++)
-    {
-        for (int r = 0; r < n - k + 1; r++)
-        {
-            positions.push_back(Ship(r, c, Orientation::V, k));
-        }
-    }
-
-    float beta = 0;
+    // Record data
     vector<int> energies((static_cast<int>(beta_max / inc) - static_cast<int>(beta_min / inc)) * iterations);
     vector<int> samples;
-
     if (record_samples)
     {
         samples.resize(energies.size() * n * n); // A grid associated with each energy value.
     }
-    int sample_offset = 0;
-    int energy_offset = 0;
+    int sample_insertion_idx = 0;
 
-    for (int i = static_cast<int>(beta_min / inc); i < static_cast<int>(beta_max / inc); ++i)
+    float beta = 0;
+    GameStateManager manager = GameStateManager(n, k, q, frozen_ships, weighting);
+    int counter = 0;
+    for (int b = static_cast<int>(beta_min / inc); b < static_cast<int>(beta_max / inc); ++b)
     {
-        beta = i * inc;
-        cout << beta << endl;
-        weighting->beta = beta;
-        auto t = simulate(n, k, q, iterations, weighting, verbose, positions, record_samples);
-
-        copy(get<0>(t).begin(), get<0>(t).end(), energies.begin() + energy_offset);
-        energy_offset += iterations;
-
-        if (record_samples)
+        beta = b * inc;
+        if ((b % period * static_cast<int>(1 / inc)) == 0)
         {
-            copy(get<1>(t).begin(), get<1>(t).end(), samples.begin() + sample_offset);
-            sample_offset += n * n * iterations;
+            cout << beta << endl;
         }
+
+        // Run simulation
+        weighting->beta = beta;
+        manager.reset();
+
+        // Run simulation
+        for (int i = 0; i < iterations; i++)
+        {
+            if (verbose && i % 100 == 0)
+            {
+                cout << i << endl;
+            }
+
+            for (const Ship *ship : manager.active_ships)
+            {
+                manager.remove_ship(*ship);
+                int id = manager.sample_shipid();
+                manager.place_ship(ships[id]);
+            }
+            manager.update_active_ships();
+
+            // Compute energy
+            int E = 0;
+            for (int j = 0; j < manager.grid.size(); ++j)
+            {
+                E += weighting->compute_square_energy(manager.grid[j]);
+            }
+            energies[counter * iterations + i] = E;
+
+            if (record_samples)
+            {
+                copy(manager.grid.begin(), manager.grid.end(), samples.begin() + sample_insertion_idx);
+                sample_insertion_idx += n * n;
+            }
+        }
+
+        ++counter;
     }
 
     ofstream F("energies.txt");

@@ -54,6 +54,16 @@ public:
     energy
     */
     virtual int update_energy(int E, int S, int D) const = 0;
+
+    /*
+    Return max energy contribution of a single ship in a grid with k ships,
+    including itself.
+
+    Parameters:
+    int k: ship length
+    int q: number of ships including itself.
+    */
+    virtual int max_energy(int k, int q) const = 0;
 };
 
 class HardLattice : public WeightingTemplate
@@ -71,6 +81,8 @@ public:
     int compute_square_energy(int s) const override;
 
     int update_energy(int E, int S, int D) const override;
+
+    int max_energy(int k, int q) const override;
 };
 
 class BinaryBoltzmann : public WeightingTemplate
@@ -90,6 +102,8 @@ public:
     int compute_square_energy(int s) const override;
 
     int update_energy(int E, int S, int D) const override;
+
+    int max_energy(int k, int q) const override;
 };
 
 class PairwiseBoltzmann : public WeightingTemplate
@@ -109,6 +123,8 @@ public:
     int update_energy(int E, int S, int D) const override;
 
     int compute_square_energy(int s) const override;
+
+    int max_energy(int k, int q) const override;
 };
 
 class OverflowBoltzmann : public WeightingTemplate
@@ -128,4 +144,6 @@ public:
     int update_energy(int E, int S, int D) const override;
 
     int compute_square_energy(int s) const override;
+
+    int max_energy(int k, int q) const override;
 };

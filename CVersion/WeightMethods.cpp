@@ -36,6 +36,11 @@ int HardLattice::update_energy(int E, int S, int D) const
     return E + D;
 }
 
+int HardLattice::max_energy(int k, int q) const
+{
+    return 1;
+}
+
 // BinaryBoltzmann implementation
 BinaryBoltzmann::BinaryBoltzmann(float beta)
 {
@@ -83,6 +88,11 @@ int BinaryBoltzmann::update_energy(int E, int S, int D) const
     }
 }
 
+int BinaryBoltzmann::max_energy(int k, int q) const
+{
+    return k;
+}
+
 // PairwiseBoltzmann implementation
 PairwiseBoltzmann::PairwiseBoltzmann(float beta)
 {
@@ -112,6 +122,11 @@ int PairwiseBoltzmann::update_energy(int E, int S, int D) const
 int PairwiseBoltzmann::compute_square_energy(int s) const
 {
     return s * (s - 1) / 2;
+}
+
+int PairwiseBoltzmann::max_energy(int k, int q) const
+{
+    return k * (q - 1);
 }
 
 // OverflowBoltzmann implementation
@@ -157,4 +172,9 @@ int OverflowBoltzmann::update_energy(int E, int S, int D) const
 int OverflowBoltzmann::compute_square_energy(int s) const
 {
     return max(0, s - 1);
+}
+
+int OverflowBoltzmann::max_energy(int k, int q) const
+{
+    return k;
 }

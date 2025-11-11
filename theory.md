@@ -109,3 +109,42 @@ and equivalently,
 \]
 
 which checks out.
+
+Note that the samples for energy approximation are correlated. So drawing with variation in mind is
+
+Here's what we need to work out next. The random sampling in this problem is characterized by a sparse (or nearly sparse, not the same) weight vector and frequent but minor weight updates.
+
+The more important consideration is probably the fact that weight updates are minor.
+
+Quantum algorithms for this problem?
+
+Comments on custom RNG:
+Floats encode values in scientific notation. Bits are reserved for the exponent shift and the number of significant digits. The table below details the standard.  
+![alt text](image.png)
+
+The C++ float corresponds to the binary32 capable of storing numbers.
+
+This problem has a discrete set of weights in bijection with the energy levels. This mean that sampling can be done by mapping ship ids to energy levels. Therefore, we do not need to maintain a separate weight array.
+
+We maintain a mapping between ids and indices at each level. We achieve constant time removal that preserves the mapping by exchanging the roles of the removed and the last element in the list.
+
+What are the common elements of every new gamestate in one beta walk?
+Possible ship arrangements (ref)
+initial configuration of active ships (ref)
+
+All initial configurations begin with no overlap:
+energy array (default values suffice)
+bucketed ids (default values suffice)
+bucketed ids to idx (copy)
+total_weight
+
+Am i doing too much and can i be faster if i did less?
+The goal now is to make the beta walk, all else constant.
+
+I'm going to implement some feeble logic to optimize for speed. There is no reason to use dictionaries if I give ships an id attribute corresponding exactly to their index in ships.
+
+At some point I'm going to have to look at mixing times. Minimizing the number of iterations would be a great improvement.
+
+Resources:
+https://www.keithschwarz.com/darts-dice-coins/
+https://www.aarondefazio.com/tangentially/?p=58

@@ -1,6 +1,5 @@
 #include "Ship.h"
 #include "WeightMethods.h"
-#include <unordered_map>
 #include <random>
 
 class GameStateManager
@@ -9,21 +8,25 @@ class GameStateManager
 public:
     std::vector<int> grid;
     int grid_dim;
+    int active_ship_number; // Used to specify an energy range in constructor.
+    int ship_length;        // See above comment
+    int max_energy;
 
-    std::vector<Ship> ships;
-    std::vector<Ship> active_ships;
-    std::vector<Ship> temp_active_ships;
+    // There is one ship array outside of this class, passed by reference. All ships
+    // used throughout the program are an instance in that array.
+    const std::vector<Ship> &ships;
+    std::vector<const Ship *> active_ships;
+    std::vector<const Ship *> temp_active_ships;
     WeightingTemplate *weighting;
 
-    std::unordered_map<Ship, int> ship_to_id;
-    std::unordered_map<int, Ship> id_to_ship;
     std::vector<std::vector<int>> squares_to_ship_ids;
-
-    std::vector<int> energies;
-    std::vector<float> marginals;
 
     int seed;
     std::mt19937 gen;
+    std::uniform_real_distribution<float> uniform_sampler;
+
+    std::vector<std::vector<int>> bucketed_ids;
+    float total_weight = 0.0f;
 
     /*
     Parameters:
@@ -31,34 +34,7 @@ public:
     ships: array of possible ship arrangements
     weighting: a weight class instance
     */
-    GameStateManager(int dim, std::vector<Ship> ships, WeightingTemplate *weighting, int seed = std::random_device()());
-
-    /*
-    Assign squares to the ship orientations that intersect it.
-
-    Returns:
-    Square array containing lists of ships
-    */
-    std::vector<std::vector<int>> create_squares_to_ship_ids() const;
-
-    /*
-    Calculate the energy of each ship given the current grid state.
-
-    Returns:
-    Array of energies
-    */
-    std::vector<int> compute_energies() const;
-
-    /*
-    Calculate the unnormalized marginal probabilities of selecting a ship
-    orientation.
-
-    See theory for when compute and update marginals are appropriate.
-
-    Returns:
-    Array of unnormalized marginals.
-    */
-    std::vector<float> compute_marginals() const;
+    GameStateManager(int dim, int ship_length, int active_ship_number, const std::vector<Ship> &ships, WeightingTemplate *weighting, int seed = std::random_device()());
 
     /*
     Update the unnormalized marginal probabilities for a subset of ship
@@ -76,7 +52,7 @@ public:
     Returns:
     None
     */
-    void update_marginals(Ship &ship, int inc);
+    void update_buckets(const Ship &ship, int inc);
 
     /*
     Increment grid cells occupied by ship by amount inc.
@@ -88,7 +64,7 @@ public:
     Returns:
     None
     */
-    void update_grid(Ship &ship, int inc);
+    void update_grid(const Ship &ship, int inc);
 
     /*
     Update grid and marginals associated with new ship placement.
@@ -99,7 +75,7 @@ public:
     Returns:
     None
     */
-    void place_ship(Ship &ship);
+    void place_ship(const Ship &ship);
 
     /*
     Update grid and marginals associated with new ship placement.
@@ -110,15 +86,15 @@ public:
     Returns:
     None
     */
-    void remove_ship(Ship &ship);
+    void remove_ship(const Ship &ship);
 
     /*
-    Sample a ship from the marginal distribution.
+    Sample a ship id from the marginal distribution.
 
     Returns:
-    Ship
+    int
     */
-    Ship sample_ship();
+    int sample_shipid();
 
     /*
     Update the list of active ships. The temporary list is created when
@@ -140,4 +116,19 @@ public:
     int: row major index
     */
     int linearize(int r, int c) const;
+
+    /*
+    Reset the state of the manager;
+    Make grid empty.
+    Reset energy and level index attributes of ships.
+    Reset bucketed ids.
+    Make active ships and temp active ships empty and repopulate.
+    */
+    void reset();
+
+private:
+    /*
+    Assign squares to the ship orientations that intersect it.
+    */
+    void create_squares_to_ship_ids();
 };
