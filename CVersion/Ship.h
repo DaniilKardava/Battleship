@@ -23,7 +23,8 @@ public:
     const std::vector<int> cols;
     const int id;
     mutable int level_idx;
-    mutable int E;
+    mutable int E_old;
+    mutable int E_current;
 
     Ship(int id, int r, int c, Orientation o, int len);
 

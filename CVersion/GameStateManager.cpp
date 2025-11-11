@@ -21,7 +21,8 @@ GameStateManager::GameStateManager(int dim, int ship_length, int active_ship_num
     {
         bucketed_ids[0][i] = i;
         ships[i].level_idx = i;
-        ships[i].E = 0;
+        ships[i].E_current = 0;
+        ships[i].E_old = 0;
     }
     total_weight = ships.size();
 
@@ -42,30 +43,39 @@ void GameStateManager::create_squares_to_ship_ids()
 
 void GameStateManager::update_buckets(const Ship &ship, int inc)
 {
+    vector<int> cumulative_ids;
+    cumulative_ids.resize(2 * ship_length * ship_length);
+
     for (int i = 0; i < ship.len; i++)
     {
         vector<int> &ids = squares_to_ship_ids[linearize(ship.rows[i], ship.cols[i])];
+        int square = grid[linearize(ship.rows[i], ship.cols[i])];
         for (int id : ids)
         {
-            int E_old = ships[id].E;
-            int E_new = weighting->update_energy(E_old, grid[linearize(ship.rows[i], ship.cols[i])], inc);
-            if (E_old != E_new)
-            {
-                // The logic works even if there is only one element.
-                int idx_of_removed = ships[id].level_idx;
-                int last_id = bucketed_ids[E_old].back();      // Get last id of the vector
-                bucketed_ids[E_old][idx_of_removed] = last_id; // Place last id in index of removed
-                bucketed_ids[E_old].pop_back();                // Remove tail
-                ships[last_id].level_idx = idx_of_removed;     // Remap the last id
+            ships[id].E_current = weighting->update_energy(ships[id].E_current, square, inc);
+            cumulative_ids.push_back(id);
+        }
+    }
 
-                bucketed_ids[E_new].push_back(id);
-                ships[id].level_idx = static_cast<int>(bucketed_ids[E_new].size()) - 1;
+    for (int id : cumulative_ids)
+    {
+        const Ship &_ship = ships[id];
+        if (_ship.E_old != _ship.E_current)
+        {
+            // The logic works even if there is only one element.
+            int idx_of_removed = _ship.level_idx;
+            int last_id = bucketed_ids[_ship.E_old].back();      // Get last id of the vector
+            bucketed_ids[_ship.E_old][idx_of_removed] = last_id; // Place last id in index of removed
+            bucketed_ids[_ship.E_old].pop_back();                // Remove tail
+            ships[last_id].level_idx = idx_of_removed;           // Remap the last id
 
-                ships[id].E = E_new;
+            bucketed_ids[_ship.E_current].push_back(id);
+            ships[id].level_idx = static_cast<int>(bucketed_ids[_ship.E_current].size()) - 1;
 
-                total_weight -= weighting->compute_weight(E_old);
-                total_weight += weighting->compute_weight(E_new);
-            }
+            _ship.E_old = _ship.E_current;
+
+            total_weight -= weighting->compute_weight(_ship.E_old);
+            total_weight += weighting->compute_weight(_ship.E_current);
         }
     }
 }
@@ -145,7 +155,8 @@ void GameStateManager::reset()
     {
         bucketed_ids[0][i] = i;
         ships[i].level_idx = i;
-        ships[i].E = 0;
+        ships[i].E_current = 0;
+        ships[i].E_old = 0;
     }
     total_weight = ships.size();
 
