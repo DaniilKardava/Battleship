@@ -80,7 +80,7 @@ int main()
             cout << beta << endl;
         }
 
-        // Run simulation
+        // Run simulation. This is sensitive, reset needs to be called after changing beta.
         weighting->beta = beta;
         manager.reset();
 
@@ -100,13 +100,8 @@ int main()
             }
             manager.update_active_ships();
 
-            // Compute energy
-            int E = 0;
-            for (int j = 0; j < manager.grid.size(); ++j)
-            {
-                E += weighting->compute_square_energy(manager.grid[j]);
-            }
-            energies[counter * iterations + i] = E;
+            // Record energy
+            energies[counter * iterations + i] = manager.grid_energy;
 
             if (record_samples)
             {

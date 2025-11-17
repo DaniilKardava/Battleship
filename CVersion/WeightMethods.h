@@ -64,6 +64,22 @@ public:
     int q: number of ships including itself.
     */
     virtual int max_energy(int k, int q) const = 0;
+
+    static int bla(int E, int S, int D)
+    {
+        if (S == 0)
+        {
+            return E - 1;
+        }
+        else if (S == 1 && D == 1)
+        {
+            return E + 1;
+        }
+        else
+        {
+            return E;
+        }
+    }
 };
 
 class HardLattice : public WeightingTemplate
@@ -139,7 +155,7 @@ public:
 
     float compute_weight(int E) const override;
 
-    int compute_energy(std::vector<int> &intersections) const override;
+    int compute_energy(std::vector<int> &intersection) const override;
 
     int update_energy(int E, int S, int D) const override;
 

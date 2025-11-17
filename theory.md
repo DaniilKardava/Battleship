@@ -145,6 +145,20 @@ I'm going to implement some feeble logic to optimize for speed. There is no reas
 
 At some point I'm going to have to look at mixing times. Minimizing the number of iterations would be a great improvement.
 
+The current slowdown comes from update buckets, it is polynomial in k, or from the operations involved with processing the whole grid when n is large (in main and compute square energy).
+
+The pairwise weighting method would hypothetically lead to slow downs in sampling, since the max energy is proportional to kq. But overflow is proportional to k. It would also be practical to cache the weights associated with these energies, at worst, if I use pairwise, it becomes proportional to n^2.
+
+Max square energy vs max ship energy.
+
+It might be nice to have the property of additive energy over squares. on the other hand, i have different energy levels corresponding to the same weight, and the max energy that i set is incorrect for weightings like hard.
+
+Can i stil lbucket into 0,1 for hard and just map all higher energies to 1? Should i even be considering the weighting right now?
+
+Hard code parameters and compile for speed?
+
+the data is fit by an exponential ae^-b*beta. So that means log Z of beta equal a/be^-b * beta + C and Z of beta equal e^(a/b \* e^-b \* beta) times e^C.
+
 Resources:
 https://www.keithschwarz.com/darts-dice-coins/
 https://www.aarondefazio.com/tangentially/?p=58

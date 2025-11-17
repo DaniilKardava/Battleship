@@ -11,6 +11,8 @@ public:
     int active_ship_number; // Used to specify an energy range in constructor.
     int ship_length;        // See above comment
     int max_energy;
+    std::vector<float> cached_weights;
+    int grid_energy;
 
     // There is one ship array outside of this class, passed by reference. All ships
     // used throughout the program are an instance in that array.

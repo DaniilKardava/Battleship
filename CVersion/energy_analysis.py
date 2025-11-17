@@ -7,7 +7,7 @@ with open("energies.txt") as f:
             values.append(int(chunk))
 energies = np.array(values, dtype=np.int8)
 
-iterations = 3000
+iterations = 1000
 energies = energies.reshape(-1, iterations)
 avg_energies = np.mean(energies, axis = 1)
 energy_variance = np.var(energies, axis = 1) / iterations

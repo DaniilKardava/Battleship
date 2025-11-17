@@ -19,9 +19,10 @@ float HardLattice::compute_weight(int E) const
 int HardLattice::compute_energy(vector<int> &intersection) const
 {
     int E = 0;
-    for (int i = 0; i < intersection.size(); i++)
+    int bound = intersection.size();
+    for (int i = 0; i < bound; i++)
     {
-        E += intersection[i];
+        E += intersection[i]; // Probably just add one to lower max energy
     }
     return E;
 }
@@ -55,7 +56,8 @@ float BinaryBoltzmann::compute_weight(int E) const
 int BinaryBoltzmann::compute_energy(vector<int> &intersection) const
 {
     int E = 0;
-    for (int i = 0; i < intersection.size(); i++)
+    int bound = intersection.size();
+    for (int i = 0; i < bound; i++)
     {
         if (intersection[i] == 1)
         {
@@ -107,7 +109,8 @@ float PairwiseBoltzmann::compute_weight(int E) const
 int PairwiseBoltzmann::compute_energy(vector<int> &intersection) const
 {
     int E = 0;
-    for (int i = 0; i < intersection.size(); i++)
+    int bound = intersection.size();
+    for (int i = 0; i < bound; i++)
     {
         E += intersection[i];
     }
@@ -140,12 +143,13 @@ float OverflowBoltzmann::compute_weight(int E) const
     return exp(-beta * E);
 }
 
-int OverflowBoltzmann::compute_energy(vector<int> &intersections) const
+int OverflowBoltzmann::compute_energy(vector<int> &intersection) const
 {
     int E = 0;
-    for (int i = 0; i < intersections.size(); i++)
+    int bound = intersection.size();
+    for (int i = 0; i < bound; i++)
     {
-        if (intersections[i] > 0)
+        if (intersection[i] > 0)
         {
             E++;
         }
