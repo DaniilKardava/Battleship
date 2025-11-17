@@ -13,7 +13,8 @@ int main()
     int n;
     int k;
     int q;
-    int iterations;
+    int sample_size;
+    int burn_in;
     bool verbose;
     bool record_samples;
 
@@ -26,8 +27,11 @@ int main()
     cout << "Ship number:";
     cin >> q;
 
-    cout << "Iterations:";
-    cin >> iterations;
+    cout << "Sample Size:";
+    cin >> sample_size;
+
+    cout << "Burn in:";
+    cin >> burn_in;
 
     cout << "Verbose:";
     cin >> verbose;
@@ -61,7 +65,7 @@ int main()
     const vector<Ship> &frozen_ships = ships; // Don't move ships but allow mutation of content.
 
     // Record data
-    vector<int> energies((static_cast<int>(beta_max / inc) - static_cast<int>(beta_min / inc)) * iterations);
+    vector<int> energies((static_cast<int>(beta_max / inc) - static_cast<int>(beta_min / inc)) * sample_size);
     vector<int> samples;
     if (record_samples)
     {
@@ -82,26 +86,24 @@ int main()
 
         // Run simulation. This is sensitive, reset needs to be called after changing beta.
         weighting->beta = beta;
-        manager.reset();
 
-        // Run simulation
-        for (int i = 0; i < iterations; i++)
+        for (int i = 0; i < sample_size; ++i)
         {
-            if (verbose && i % 100 == 0)
-            {
-                cout << i << endl;
-            }
+            manager.reset();
 
-            for (const Ship *ship : manager.active_ships)
+            for (int j = 0; j < burn_in; ++j)
             {
-                manager.remove_ship(*ship);
-                int id = manager.sample_shipid();
-                manager.place_ship(ships[id]);
+                for (const Ship *ship : manager.active_ships)
+                {
+                    manager.remove_ship(*ship);
+                    int id = manager.sample_shipid();
+                    manager.place_ship(ships[id]);
+                }
+                manager.update_active_ships();
             }
-            manager.update_active_ships();
 
             // Record energy
-            energies[counter * iterations + i] = manager.grid_energy;
+            energies[counter * sample_size + i] = manager.grid_energy;
 
             if (record_samples)
             {
@@ -109,7 +111,6 @@ int main()
                 sample_insertion_idx += n * n;
             }
         }
-
         ++counter;
     }
 

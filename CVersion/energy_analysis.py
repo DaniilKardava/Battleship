@@ -7,7 +7,7 @@ with open("energies.txt") as f:
             values.append(int(chunk))
 energies = np.array(values, dtype=np.int8)
 
-iterations = 1000
+iterations = 100
 energies = energies.reshape(-1, iterations)
 avg_energies = np.mean(energies, axis = 1)
 energy_variance = np.var(energies, axis = 1) / iterations
@@ -35,7 +35,7 @@ plt.plot(x, avg_energies)
 plt.show()
 
 # Integrate 
-delta = np.sum(0.1 * avg_energies)
+delta = np.sum(0.01 * avg_energies)
 print(delta)
 
 import sympy as sp

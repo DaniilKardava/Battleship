@@ -27,7 +27,8 @@ public:
     std::mt19937 gen;
     std::uniform_real_distribution<float> uniform_sampler;
 
-    std::vector<std::vector<int>> bucketed_ids;
+    std::vector<int> bucketed_ids;
+    std::vector<int> bucket_size;
     float total_weight = 0.0f;
 
     /*
